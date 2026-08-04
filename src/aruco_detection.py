@@ -102,7 +102,7 @@ def getAruco(image, aruco_dict_id, visualisation = True, debug=False):
                 tuple(inner_pts[0] + np.array([0, -8])),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
-                (255, 255, 255),
+                (255, 0, 0),
                 1
             )
             cv2.putText(
@@ -111,7 +111,7 @@ def getAruco(image, aruco_dict_id, visualisation = True, debug=False):
                 tuple(inner_pts[0] + np.array([0, -8])),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
-                (255, 255, 255),
+                (255, 0, 0),
                 1
             )
 
@@ -128,9 +128,9 @@ def getAruco(image, aruco_dict_id, visualisation = True, debug=False):
             cv2.destroyAllWindows()
     else:
         print("[INFO] No markers detected. Check image quality, lighting, or try custom dictionary. Rejected candidates:", len(rejected))
-        refined_marker_dict = {}
+        marker_dict = {}
 
-    return refined_marker_dict
+    return marker_dict
 
 
 def filter_marker_outliers(marker_dict, distance_sigma=1.0, area_sigma=1.0, min_samples=3, debug=False):
@@ -333,7 +333,7 @@ def detect_white_border(corner, image, pad=20, morph_closing=False, debug=False)
 
 
 if __name__ == "__main__":
-    path = '/Users/nova98/Documents/Nova/Helios+/FX10/20260629/FX10_ArucoCubeAll_test4_2026-06-29_09-40-12/FX10_ArucoCubeAll_test4_2026-06-29_09-40-12.png'
+    path = '/Users/nova98/Documents/Nova/Helios+/FX10/20260716/FX10_ArucoCube_rectangleObjects_2026-07-16_09-43-21/FX10_ArucoCube_rectangleObjects_2026-07-16_09-43-21.png'
     image = cv2.imread(path)
     marker_dict = getAruco(image, aruco_dict_id=cv2.aruco.DICT_4X4_1000, debug=True)
     pass
