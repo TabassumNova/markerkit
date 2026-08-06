@@ -246,7 +246,7 @@ def is_valid_outer_contour(contour, approx_eps_ratio=0.02, min_area_ratio=0.65, 
 
     return area_ratio >= min_area_ratio
 
-def detect_white_border(corner, image, pad=20, morph_closing=False, debug=False):
+def detect_white_border(corner, image, pad=20, morph_closing=False, debug=False, area_validation=False):
     """
     Detect border points for a single ArUco marker corner set.
     Args:
@@ -255,6 +255,7 @@ def detect_white_border(corner, image, pad=20, morph_closing=False, debug=False)
         pad: Padding around the marker bounding box for ROI extraction.
         morph_closing: Whether to apply morphological closing to the edge image.
         debug: Whether to show debug visualizations.
+        area_validation: Whether to validate the detected contour based on its area ratio.
     Returns:
         4x2 array of outer corners (border points) if detected, otherwise None.
     
@@ -307,7 +308,7 @@ def detect_white_border(corner, image, pad=20, morph_closing=False, debug=False)
         cv2.destroyAllWindows()
 
     # Filter contours that doesn't pass validation
-    if not is_valid_outer_contour(best, debug=debug):
+    if area_validation and not is_valid_outer_contour(best, debug=debug):
         if debug:
             print("[DEBUG] Skipping outer border: contour failed quadrilateral/area validation.")
         return None
@@ -333,7 +334,7 @@ def detect_white_border(corner, image, pad=20, morph_closing=False, debug=False)
 
 
 if __name__ == "__main__":
-    path = '/Users/nova98/Documents/Nova/Helios+/FX10/20260716/FX10_ArucoCube_rectangleObjects_2026-07-16_09-43-21/FX10_ArucoCube_rectangleObjects_2026-07-16_09-43-21.png'
+    path = '/Users/nova98/Documents/Nova/Helios+/FX10/20260805/FX10_obj10_pos_16_22_2026-08-05_11-38-25/FX10_obj10_pos_16_22_2026-08-05_11-38-25.png'
     image = cv2.imread(path)
-    marker_dict = getAruco(image, aruco_dict_id=cv2.aruco.DICT_4X4_1000, debug=True)
+    marker_dict = getAruco(image, aruco_dict_id=cv2.aruco.DICT_4X4_1000, debug=False)
     pass
