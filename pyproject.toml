@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "marker-detection"
+name = "markerkit"
 version = "0.0.1"
 description = "Aruco and barcode marker creation and detection utilities"
 readme = "README.md"
@@ -21,8 +21,8 @@ dependencies = [
 barcode = ["python-barcode", "pyzbar"]
 
 [tool.setuptools]
-packages = ["marker_detection", "aruco_pattern"]
-package-dir = {"marker_detection" = "src", "aruco_pattern" = "aruco_pattern"}
+packages = ["markerkit", "aruco_pattern"]
+package-dir = {"markerkit" = "src", "aruco_pattern" = "aruco_pattern"}
 
 [tool.setuptools.package-data]
 "aruco_pattern" = ["*.json"]

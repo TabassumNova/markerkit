@@ -1,4 +1,4 @@
-# Marker-detection
+# markerkit
 Aruco and barcode markers
 
 
@@ -6,7 +6,7 @@ Aruco creation
 ---------------------------
 
 ```python
-from marker_detection import generate_arucos
+from markerkit import generate_arucos
 
 generate_arucos(
 	output="location/to/output/path/my_board.svg",
@@ -28,7 +28,7 @@ Aruco inner and outer border detection
 
 ```python
 import cv2
-from marker_detection import getAruco
+from markerkit import getAruco
 
 image = cv2.imread("path/to/image.png")
 markers = getAruco(image, cv2.aruco.DICT_4X4_1000, visualisation=False)
