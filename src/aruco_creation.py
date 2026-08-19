@@ -24,11 +24,16 @@ import argparse
 import numpy as np
 import json
 import gzip
-from svgfig import *
+from importlib import resources
+
+try:
+    from .svgfig import *
+except ImportError:
+    from svgfig import *
 
 
 class PatternMaker:
-    def __init__(self, cols, rows, output, units, square_size, radius_rate, page_width, page_height, markers, aruco_marker_size, dict_file, marker_id):
+    def __init__(self, cols, rows, output, units, square_size, radius_rate, page_width, page_height, markers, aruco_marker_size, dict_name, marker_id):
         self.cols = cols
         self.rows = rows
         self.output = output
@@ -39,7 +44,7 @@ class PatternMaker:
         self.height = page_height
         self.markers = markers
         self.aruco_marker_size = aruco_marker_size #for charuco boards only
-        self.dict_file = dict_file
+        self.dict_name = dict_name
         self.marker_id = marker_id
         self.g = SVG("g")  # the svg group container
 
@@ -165,15 +170,21 @@ class PatternMaker:
             print("Error: Aruco marker cannot be lager than chessboard square!")
             return
 
-        if (self.dict_file.split(".")[-1] == "gz"):
-            with gzip.open(self.dict_file, 'r') as fin:
-                json_bytes = fin.read()
-                json_str = json_bytes.decode('utf-8')
-                dictionary = json.loads(json_str)
+        dict_resource = resources.files("aruco_pattern").joinpath(self.dict_name)
+        if not dict_resource.is_file():
+            raise FileNotFoundError(f"Bundled aruco dictionary not found: {self.dict_name}")
+
+        if (self.dict_name.split(".")[-1] == "gz"):
+            with resources.as_file(dict_resource) as dict_path:
+                with gzip.open(dict_path, 'r') as fin:
+                    json_bytes = fin.read()
+                    json_str = json_bytes.decode('utf-8')
+                    dictionary = json.loads(json_str)
 
         else:
-            f = open(self.dict_file)
-            dictionary = json.load(f)
+            with resources.as_file(dict_resource) as dict_path:
+                with open(dict_path) as f:
+                    dictionary = json.load(f)
 
         if (dictionary["nmarkers"] < int(self.cols*self.rows/2)):
             print("Error: Aruco dictionary contains less markers than it needs for chosen board. Please choose another dictionary or use smaller board than required for chosen board")
@@ -251,54 +262,93 @@ def main():
                         default=argparse.SUPPRESS, action="store", dest="markers", nargs="+", type=int)
     parser.add_argument("-p", "--marker_size", help="aruco markers size for ChAruco pattern (default 10.0)", default="10.0",
                         action="store", dest="aruco_marker_size", type=float)
-    parser.add_argument("-f", "--dict_file", help="file name of custom aruco dictionary for ChAruco pattern", default="DICT_ARUCO_ORIGINAL.json",
-                        action="store", dest="dict_file", type=str)
+    parser.add_argument("-f", "--dict_name", help="file name of bundled aruco dictionary for ChAruco pattern", default="DICT_ARUCO_ORIGINAL.json",
+                        action="store", dest="dict_name", type=str)
     parser.add_argument("-i", "--marker_id", help="marker ID for ChAruco pattern (default 0, that means it will start from 0)",
                          default=0, action="store", dest="marker_id", type=int)
     args = parser.parse_args()
 
-    show_help = args.show_help
-    if show_help:
+    if args.show_help:
         parser.print_help()
         return
-    output = args.output
-    columns = args.columns
-    rows = args.rows
-    p_type = args.p_type
-    units = args.units
-    square_size = args.square_size
-    radius_rate = args.radius_rate
-    aruco_marker_size = args.aruco_marker_size
-    dict_file = args.dict_file
-    marker_id = args.marker_id
-    if 'page_width' and 'page_height' in args:
-        page_width = args.page_width
-        page_height = args.page_height
+
+    generate_arucos(
+        output=args.output,
+        columns=args.columns,
+        rows=args.rows,
+        p_type=args.p_type,
+        units=args.units,
+        square_size=args.square_size,
+        radius_rate=args.radius_rate,
+        page_width=getattr(args, "page_width", None),
+        page_height=getattr(args, "page_height", None),
+        page_size=args.page_size,
+        markers=getattr(args, "markers", None),
+        aruco_marker_size=args.aruco_marker_size,
+        dict_name=args.dict_name,
+        marker_id=args.marker_id,
+    )
+
+
+def generate_arucos(
+    output="out.svg",
+    columns=8,
+    rows=11,
+    p_type="circles",
+    units="mm",
+    square_size=20.0,
+    radius_rate=5.0,
+    page_width=None,
+    page_height=None,
+    page_size="A4",
+    markers=None,
+    aruco_marker_size=10.0,
+    dict_name="DICT_ARUCO_ORIGINAL.json",
+    marker_id=0,
+):
+    if page_width is not None and page_height is not None:
+        resolved_page_width = page_width
+        resolved_page_height = page_height
     else:
-        page_size = args.page_size
         # page size dict (ISO standard, mm) for easy lookup. format - size: [width, height]
         page_sizes = {"A0": [840, 1188], "A1": [594, 840], "A2": [420, 594], "A3": [297, 420], "A4": [210, 297],
                       "A5": [148, 210]}
-        page_width = page_sizes[page_size][0]
-        page_height = page_sizes[page_size][1]
-    markers = None
-    if p_type == "radon_checkerboard" and "markers" in args:
-        if len(args.markers) % 2 == 1:
-            raise ValueError("The length of the markers array={} must be even".format(len(args.markers)))
-        markers = set()
-        for x, y in zip(args.markers[::2], args.markers[1::2]):
+        resolved_page_width = page_sizes[page_size][0]
+        resolved_page_height = page_sizes[page_size][1]
+
+    marker_cells = None
+    if p_type == "radon_checkerboard" and markers is not None:
+        if len(markers) % 2 == 1:
+            raise ValueError("The length of the markers array={} must be even".format(len(markers)))
+        marker_cells = set()
+        for x, y in zip(markers[::2], markers[1::2]):
             if x in range(0, columns) and y in range(0, rows):
-                markers.add((x, y))
+                marker_cells.add((x, y))
             else:
                 raise ValueError("The marker {},{} is outside the checkerboard".format(x, y))
 
-    pm = PatternMaker(columns, rows, output, units, square_size, radius_rate, page_width, page_height, markers, aruco_marker_size, dict_file, marker_id)
-    # dict for easy lookup of pattern type
-    mp = {"circles": pm.make_circles_pattern, "acircles": pm.make_acircles_pattern,
-          "checkerboard": pm.make_checkerboard_pattern, "radon_checkerboard": pm.make_radon_checkerboard_pattern,
-         "charuco_board": pm.make_charuco_board}
-    mp[p_type]()
-    # this should save pattern to output
+    pm = PatternMaker(
+        columns,
+        rows,
+        output,
+        units,
+        square_size,
+        radius_rate,
+        resolved_page_width,
+        resolved_page_height,
+        marker_cells,
+        aruco_marker_size,
+        dict_name,
+        marker_id,
+    )
+    pattern_methods = {
+        "circles": pm.make_circles_pattern,
+        "acircles": pm.make_acircles_pattern,
+        "checkerboard": pm.make_checkerboard_pattern,
+        "radon_checkerboard": pm.make_radon_checkerboard_pattern,
+        "charuco_board": pm.make_charuco_board,
+    }
+    pattern_methods[p_type]()
     pm.save()
 
 

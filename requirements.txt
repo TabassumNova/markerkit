@@ -1,7 +1,0 @@
-# Marker-detection Python requirements
-# Add or update packages as needed
-opencv-python
-numpy
-setuptools
-python-barcode
-pyzbar

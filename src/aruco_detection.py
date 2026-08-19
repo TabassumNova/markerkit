@@ -43,8 +43,7 @@ def get_effective_outer_corners(marker_data, fallback_mode="strict"):
 
 def getAruco(image, aruco_dict_id, visualisation = True, debug=False):
     if image is None:
-        print("Error: Could not load image.")
-        sys.exit(1)
+        raise ValueError("Could not load image.")
 
     h, w = image.shape[:2]
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

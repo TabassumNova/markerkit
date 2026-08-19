@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "marker-detection"
+version = "0.0.1"
+description = "Aruco and barcode marker creation and detection utilities"
+readme = "README.md"
+authors = [{name = "Tasnim Tabassum Nova", email = "tabassumnova1@gmail.com"}]
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "opencv-contrib-python",
+  "python-barcode",
+  "pyzbar"
+]
+
+[project.optional-dependencies]
+barcode = ["python-barcode", "pyzbar"]
+
+[tool.setuptools]
+packages = ["marker_detection", "aruco_pattern"]
+package-dir = {"marker_detection" = "src", "aruco_pattern" = "aruco_pattern"}
+
+[tool.setuptools.package-data]
+"aruco_pattern" = ["*.json"]
